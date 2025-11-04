@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Check Links - Darkweb Link Checker{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">✔️ Check Link Status</h2>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>{{ stats.unchecked }}</h3>
+            <p>Unchecked</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ stats.alive }}</h3>
+            <p>Alive</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ stats.dead }}</h3>
+            <p>Dead</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ stats.total }}</h3>
+            <p>Total</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">Start Link Checking</h3>
+    <p style="margin-bottom: 1rem; color: #666;">
+        ⚠️ Make sure Tor Browser is running before checking links. The checker will use the Tor SOCKS5 proxy at 127.0.0.1:9150.
+    </p>
+
+    <form method="POST" action="{% url 'check_links' %}">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select Links to Check:</label>
+            <select name="status" class="search-box" style="width: 300px;">
+                <option value="unchecked">Unchecked Links ({{ stats.unchecked }})</option>
+                <option value="dead">Dead Links ({{ stats.dead }})</option>
+                <option value="alive">Re-check Alive Links ({{ stats.alive }})</option>
+                <option value="all">All Links ({{ stats.total }})</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Number of Links to Check:</label>
+            <input type="number" name="limit" value="50" min="1" max="500" class="search-box" style="width: 200px;">
+        </div>
+
+        <button type="submit" class="btn btn-success" style="font-size: 1rem; padding: 1rem 2rem;">
+            🚀 Start Checking
+        </button>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">ℹ️ How It Works</h3>
+    <ul style="line-height: 2; color: #555;">
+        <li>✅ The checker connects through Tor network (SOCKS5 proxy)</li>
+        <li>⏱️ Each link is checked with a 30-second timeout</li>
+        <li>🔄 Up to 20 links are checked concurrently for speed</li>
+        <li>💾 Results are automatically saved to the database</li>
+        <li>📊 Check history is logged for each link</li>
+        <li>🎯 You can filter which links to check (unchecked, dead, alive, or all)</li>
+    </ul>
+</div>
+{% endblock %}
+

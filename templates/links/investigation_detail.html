@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Investigation Results • Darkweb Search{% endblock %}
+{% block content %}
+<div class="header"><div class="logo"> INVESTIGATION RESULTS</div></div>
+<a href="{% url 'home' %}" class="btn btn-ghost">← Back To Home</a>
+<div class="card" style="margin-top:16px">
+  <h2 class="card-title">Target Information</h2>
+  <div class="table" style="border:none;box-shadow:none">
+    <table>
+      <tbody>
+        <tr><th style="width:220px">Investigated URL</th><td class="url">{{ investigation.investigated_url }}</td></tr>
+        <tr><th>Investigation Date</th><td>{{ investigation.created_at|date:"Y-m-d H:i:s" }}</td></tr>
+        <tr><th>Last Updated</th><td>{{ investigation.updated_at|date:"Y-m-d H:i:s" }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-number">{{ investigation.emails|length }}</div><div class="stat-label">Email Addresses</div></div>
+  <div class="stat-card"><div class="stat-number">{{ investigation.btc_addresses|length }}</div><div class="stat-label">Bitcoin</div></div>
+  <div class="stat-card"><div class="stat-number">{{ investigation.ethereum_addresses|length }}</div><div class="stat-label">Ethereum</div></div>
+  <div class="stat-card"><div class="stat-number">{{ investigation.external_links|length }}</div><div class="stat-label">External Links</div></div>
+</div>
+{% if investigation.emails %}
+<div class="card"><div class="card-title">📧 Email Addresses ({{ investigation.emails|length }})</div><div class="table" style="border:none;box-shadow:none"><table><tbody>{% for email in investigation.emails %}<tr><td style="word-break:break-all">{{ email }}</td><td style="width:120px;text-align:right"><button class="btn btn-ghost" onclick="copyToClipboard('{{ email }}')">📋 Copy</button></td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+{% if investigation.btc_addresses %}
+<div class="card"><div class="card-title">₿ Bitcoin Addresses ({{ investigation.btc_addresses|length }})</div><div class="table" style="border:none;box-shadow:none"><table><tbody>{% for v in investigation.btc_addresses %}<tr><td style="word-break:break-all">{{ v }}</td><td style="width:120px;text-align:right"><button class="btn btn-ghost" onclick="copyToClipboard('{{ v }}')">📋 Copy</button></td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+{% if investigation.ethereum_addresses %}
+<div class="card"><div class="card-title">💎 Ethereum Addresses ({{ investigation.ethereum_addresses|length }})</div><div class="table" style="border:none;box-shadow:none"><table><tbody>{% for v in investigation.ethereum_addresses %}<tr><td style="word-break:break-all">{{ v }}</td><td style="width:120px;text-align:right"><button class="btn btn-ghost" onclick="copyToClipboard('{{ v }}')">📋 Copy</button></td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+{% if investigation.external_links %}
+<div class="card"><div class="card-title">🔗 External Links ({{ investigation.external_links|length }})</div><div class="table" style="border:none;box-shadow:none"><table><tbody>{% for v in investigation.external_links %}<tr><td style="word-break:break-all"><a href="{{ v }}" target="_blank" class="url">{{ v }}</a></td><td style="width:120px;text-align:right"><button class="btn btn-ghost" onclick="copyToClipboard('{{ v }}')">📋 Copy</button></td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+{% if investigation.has_server_status %}
+<div class="notice info">Server-status page may be accessible at: {{ investigation.investigated_url }}/server-status</div>
+{% endif %}
+{% if not investigation.emails and not investigation.btc_addresses and not investigation.monero_addresses and not investigation.ethereum_addresses %}
+<div class="card"><div style="text-align:center;color:var(--text-secondary)">No sensitive information found on this page.</div></div>
+{% endif %}
+<script>
+function copyToClipboard(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');alert('Copied to clipboard!')}catch(err){alert('Failed to copy')}document.body.removeChild(ta)}
+</script>
+{% endblock %}
+

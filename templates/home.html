@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Darkweb Link Finder{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Search Onion Links</h2>
+    <form method="get" action="{% url 'home' %}">
+        <input type="text" name="q" class="search-box" placeholder="Search .onion links or keywords..." value="{{ request.GET.q }}">
+        <button type="submit" class="btn">🔍 Search</button>
+    </form>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>{{ stats.total_links|default:"0" }}</h3>
+        <p>Total Links</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.alive_links|default:"0" }}</h3>
+        <p>Alive Links</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.dead_links|default:"0" }}</h3>
+        <p>Dead Links</p>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Recent Links</h2>
+    {% if recent_links %}
+    <table>
+        <thead>
+            <tr>
+                <th>URL</th>
+                <th>Title</th>
+                <th>Last Checked</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for link in recent_links %}
+            <tr class="link-item">
+                <td class="url-text">{{ link.url }}</td>
+                <td>{{ link.title|default:"—" }}</td>
+                <td>{{ link.last_checked|date:"Y-m-d H:i"|default:"Never" }}</td>
+                <td>
+                    {% if link.status == "alive" %}
+                        <span class="status-badge status-alive">✓ Alive</span>
+                    {% elif link.status == "dead" %}
+                        <span class="status-badge status-dead">✗ Dead</span>
+                    {% else %}
+                        <span class="status-badge status-unchecked">? Unchecked</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #666; padding: 2rem;">No links found. Start by adding some .onion links through the admin panel.</p>
+    {% endif %}
+</div>
+
+{% if sources %}
+<div class="card">
+    <h2>Available Search Sources</h2>
+    <div class="stats-grid">
+        {% for source in sources %}
+        <div class="stat-card">
+            <h3>{{ source.name }}</h3>
+            <p>{{ source.url|truncatechars:30 }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

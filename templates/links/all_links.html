@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}All Links - Darkweb Link Checker{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">📋 All Onion Links</h2>
+
+    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <a href="{% url 'all_links' %}" class="btn {% if not selected_status %}btn-success{% endif %}">All</a>
+        <a href="{% url 'all_links' %}?status=alive" class="btn {% if selected_status == 'alive' %}btn-success{% endif %}">Alive</a>
+        <a href="{% url 'all_links' %}?status=dead" class="btn {% if selected_status == 'dead' %}btn-success{% endif %}">Dead</a>
+        <a href="{% url 'all_links' %}?status=unchecked" class="btn {% if selected_status == 'unchecked' %}btn-success{% endif %}">Unchecked</a>
+    </div>
+
+    {% if links %}
+    <table>
+        <thead>
+            <tr>
+                <th>URL</th>
+                <th>Status</th>
+                <th>Category</th>
+                <th>Response Time</th>
+                <th>Last Checked</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for link in links %}
+            <tr>
+                <td class="url-text">{{ link.url|truncatechars:50 }}</td>
+                <td><span class="status-badge status-{{ link.status }}">{{ link.get_status_display }}</span></td>
+                <td>{{ link.category|default:"-" }}</td>
+                <td>{% if link.response_time %}{{ link.response_time|floatformat:2 }}s{% else %}-{% endif %}</td>
+                <td>{% if link.last_checked %}{{ link.last_checked|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+                <td>
+                    <a href="{% url 'link_detail' link.id %}" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">View</a>
+                    {% if user.is_authenticated and link.status == 'alive' %}
+                    <a href="{% url 'open_sandbox' link.id %}" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Open</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; padding: 2rem; color: #666;">No links found.</p>
+    {% endif %}
+</div>
+{% endblock %}
+

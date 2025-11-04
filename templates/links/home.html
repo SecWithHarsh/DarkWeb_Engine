@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Home • Darkweb Search{% endblock %}
+{% block content %}
+<div id="net-animation" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
+<div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 80vh; text-align: center;">
+  <div class="header" style="padding-bottom: 2rem;">
+    <div class="logo">DARKWEB SEARCH ENGINE</div>
+    <div class="tagline">Deep Web Onion Link Finder & Validator</div>
+  </div>
+  <div>
+    <form method="POST" action="{% url 'search_and_check' %}" id="searchForm">
+      {% csrf_token %}
+      <div style="margin-bottom:1.5rem">
+        <input type="text" name="keyword" id="searchKeyword" class="input" placeholder="....Enter search keyword...." required style="padding: 20px 300px; font-size: 1.5rem;">
+      </div>
+        <div>
+      <button type="submit" class="btn btn-primary" style="width:30%; padding: 18px 10px;">
+
+        <span class="spinner" style="display: none; margin-right: 8px;"></span>
+        <span>Search & Check Links</span>
+      </button>
+             </div>
+    </form>
+    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{% url 'investigate_by_url' %}" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Investigate URL</a>
+      <span style="color: var(--border);">|</span>
+      <a href="{% url 'all_investigations' %}" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">View Investigations</a>
+    </div>
+  </div>
+</div>
+<div class="footer" style="position: absolute; bottom: 0; width: 100%; left: 0; text-align: center;">Connected via Tor • Stay anonymous • Use VPN</div>
+<div id="explicitModal" class="modal">
+  <div class="modal-content" style="max-width:640px;margin:10% auto;overflow:hidden">
+    <div class="modal-header" style="background:linear-gradient(135deg, rgba(239,68,68,.12), rgba(220,38,38,.12))">
+      <div class="modal-title">Explicit Content Warning</div>
+      <span class="close" onclick="closeExplicitWarning()">×</span>
+    </div>
+    <div style="padding:22px">
+      <p><strong>The keyword you entered may return explicit, illegal, or disturbing content.</strong></p>
+      <p>Search term: "<span id="explicitKeywordDisplay" style="color:#fca5a5;font-weight:700"></span>" is flagged as sensitive.</p>
+      <p style="margin-top:10px;color:var(--warning)">Results will be displayed if you proceed.</p>
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px">
+        <button class="btn btn-ghost" onclick="closeExplicitWarning()">Cancel</button>
+        <button class="btn btn-primary" onclick="proceedWithRisk()">I Understand • Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+<script>
+VANTA.NET({
+  el: "#net-animation",
+  mouseControls: true,
+  touchControls: true,
+  gyroControls: false,
+  minHeight: 200.00,
+  minWidth: 200.00,
+  scale: 1.00,
+  scaleMobile: 1.00,
+  color: '#3b82f6',
+  backgroundColor: '#000000',
+  points: 10.00,
+  maxDistance: 25.00,
+  spacing: 20.00
+});
+
+const explicitKeywords = [
+  'drug', 'drugs', 'weapon', 'weapons', 'hack', 'hacking', 'credit card',
+  'porn', 'adult', 'sex', 'kill', 'murder', 'hitman', 'assassin',
+  'cocaine', 'heroin', 'meth', 'lsd', 'mdma', 'ecstasy', 'weed', 'cannabis',
+  'gun', 'guns', 'firearm', 'explosives', 'bomb', 'terrorism',
+  'counterfeit', 'fake id', 'passport', 'stolen', 'fraud', 'scam',
+  'child', 'cp', 'illegal', 'snuff', 'gore', 'torture'
+];
+
+let pendingFormSubmit = false;
+
+function checkExplicitKeyword(event) {
+  const keyword = document.getElementById('searchKeyword').value.toLowerCase();
+
+  if (pendingFormSubmit) {
+    return true;
+  }
+
+  const isFlagged = explicitKeywords.some(term => keyword.includes(term));
+
+  if (isFlagged) {
+    event.preventDefault();
+    document.getElementById('explicitKeywordDisplay').textContent = keyword;
+    document.getElementById('explicitModal').style.display = 'block';
+    return false;
+  }
+
+  return true;
+}
+
+function closeExplicitWarning() {
+  document.getElementById('explicitModal').style.display = 'none';
+}
+
+function proceedWithRisk() {
+  document.getElementById('explicitModal').style.display = 'none';
+  pendingFormSubmit = true;
+  document.getElementById('searchForm').submit();
+}
+
+document.getElementById('searchForm').addEventListener('submit', function(event) {
+  if (!checkExplicitKeyword(event)) {
+    return;
+  }
+
+  const button = this.querySelector('button[type="submit"]');
+  const spinner = button.querySelector('.spinner');
+  const buttonText = button.querySelector('span:not(.spinner)');
+
+  spinner.style.display = 'inline-block';
+  buttonText.textContent = 'Searching...';
+  button.disabled = true;
+});
+</script>
+{% endblock %}

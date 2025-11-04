@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}All Investigations • Darkweb Search{% endblock %}
+{% block content %}
+<div class="header"><div class="logo">All Investigations</div></div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+  <a href="{% url 'home' %}" class="btn btn-ghost">← Back To Home</a>
+  <a href="{% url 'investigate_by_url' %}" class="btn btn-primary">🔍 New Investigation</a>
+</div>
+<div class="stats-grid" style="margin-bottom:18px">
+  <div class="stat-card"><div class="stat-number">{{ stats.total_investigations }}</div><div class="stat-label">Total Investigations</div></div>
+  <div class="stat-card"><div class="stat-number">{{ stats.total_emails }}</div><div class="stat-label">Emails Found</div></div>
+  <div class="stat-card"><div class="stat-number">{{ stats.total_btc }}</div><div class="stat-label">BTC Addresses</div></div>
+  <div class="stat-card"><div class="stat-number">{{ stats.total_ethereum }}</div><div class="stat-label">Ethereum Addresses</div></div>
+</div>
+{% if investigations %}
+<div class="table">
+  <h3 style="padding:18px 16px;margin:0;color:var(--text-primary)">🔍 Recent Investigations</h3>
+  <table>
+    <thead><tr><th>URL</th><th>Date</th><th>Findings</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for inv in investigations %}
+      <tr>
+        <td class="url">{{ inv.investigated_url|truncatechars:60 }}</td>
+        <td>{{ inv.created_at|date:"Y-m-d H:i" }}</td>
+        <td>
+          {% if inv.emails %}<span class="badge" style="background:linear-gradient(135deg, rgba(0,150,255,.2), rgba(0,120,255,.2));border:1px solid #0096ff;color:#66b3ff">📧 {{ inv.emails|length }}</span>{% endif %}
+          {% if inv.btc_addresses %}<span class="badge" style="background:linear-gradient(135deg, rgba(245,158,11,.2), rgba(217,119,6,.2));border:1px solid var(--accent);color:#fbbf24">₿ {{ inv.btc_addresses|length }}</span>{% endif %}
+          {% if inv.monero_addresses %}<span class="badge" style="background:linear-gradient(135deg, rgba(255,100,0,.2), rgba(230,90,0,.2));border:1px solid #ff6400;color:#ff9966">🔒 {{ inv.monero_addresses|length }}</span>{% endif %}
+          {% if inv.ethereum_addresses %}<span class="badge" style="background:linear-gradient(135deg, rgba(98,126,234,.2), rgba(78,106,214,.2));border:1px solid #627eea;color:#8fa9f3">💎 {{ inv.ethereum_addresses|length }}</span>{% endif %}
+        </td>
+        <td><a href="{% url 'investigation_detail' inv.id %}" class="btn btn-primary" style="padding:8px 14px"> View Details</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card"><div style="text-align:center;color:var(--text-secondary)">No investigations yet. Start investigating onion links to see results here.</div></div>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Links - Darkweb Link Checker{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">🔍 Search Onion Links</h2>
+
+    <form method="GET" action="{% url 'search_links' %}">
+        <input type="text"
+               name="q"
+               class="search-box"
+               placeholder="Search by keywords, title, description, or URL..."
+               value="{{ query }}">
+
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <select name="status" class="search-box" style="width: auto;">
+                <option value="">All Status</option>
+                <option value="alive" {% if selected_status == 'alive' %}selected{% endif %}>Alive</option>
+                <option value="dead" {% if selected_status == 'dead' %}selected{% endif %}>Dead</option>
+                <option value="unchecked" {% if selected_status == 'unchecked' %}selected{% endif %}>Unchecked</option>
+            </select>
+
+            <select name="category" class="search-box" style="width: auto;">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="btn">Search</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">Results: {{ total_results }} link{{ total_results|pluralize }}</h3>
+
+    {% if links %}
+    <table>
+        <thead>
+            <tr>
+                <th>URL</th>
+                <th>Category</th>
+                <th>Keywords</th>
+                <th>Status</th>
+                <th>Response Time</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for link in links %}
+            <tr>
+                <td class="url-text">{{ link.url|truncatechars:50 }}</td>
+                <td>{{ link.category|default:"-" }}</td>
+                <td>{{ link.keywords|truncatechars:30|default:"-" }}</td>
+                <td><span class="status-badge status-{{ link.status }}">{{ link.get_status_display }}</span></td>
+                <td>{% if link.response_time %}{{ link.response_time|floatformat:2 }}s{% else %}-{% endif %}</td>
+                <td>
+                    <a href="{% url 'link_detail' link.id %}" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">View</a>
+                    {% if user.is_authenticated and link.status == 'alive' %}
+                    <a href="{% url 'open_sandbox' link.id %}" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Open</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; padding: 2rem; color: #666;">No links found. Try different search criteria.</p>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Checking Links • {{ keyword }}{% endblock %}
+{% block content %}
+<div class="header">
+  <div class="logo">🔎 Checking Links</div>
+  <div class="tagline">Keyword: {{ keyword }}</div>
+  <div class="mt-4">
+      <a href="{% url 'home' %}" class="btn btn-secondary">← New Search</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Progress</div>
+  <div class="progress">
+    <div id="progressBar" class="progress-bar"></div>
+  </div>
+  <div id="progressMeta" class="text-muted mt-2">0% — 0/{{ total }}</div>
+</div>
+
+<div id="results" class="table mt-4" style="display:none">
+  <h3>Alive Links</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>URL</th>
+        <th>Title</th>
+        <th>Response</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="resultsBody"></tbody>
+  </table>
+</div>
+
+<div class="footer">Connected via Tor • Stay anonymous • Use VPN</div>
+
+<div id="sandboxModal" class="modal">
+  <div class="modal-content" style="max-width:1400px;height:90vh;margin:2% auto;display:flex;flex-direction:column">
+    <div class="modal-header">
+      <div class="modal-title">🔒 Secure Sandbox</div>
+      <span class="close" onclick="closeSandbox()">×</span>
+    </div>
+    <div style="flex:1;position:relative;background:#000">
+      <div id="sandboxLoading" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-secondary)">
+        <div class="loader"></div>
+        <div style="color:var(--primary);font-weight:700">Loading content through Tor…</div>
+        <div>This may take 20–30 seconds.</div>
+      </div>
+      <div id="sandboxError" style="display:none;height:100%;align-items:center;justify-content:center;text-align:center;color:#fca5a5;padding:22px">
+        <div>
+          <div style="color:var(--error);font-weight:700;margin-bottom:10px">Failed to load content</div>
+          <div id="errorMessage"></div>
+        </div>
+      </div>
+      <iframe id="sandboxFrame" sandbox="allow-scripts allow-same-origin" style="display:none;width:100%;height:100%;border:none"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+const searchId = '{{ search_id }}';
+const progressBar = document.getElementById('progressBar');
+const progressMeta = document.getElementById('progressMeta');
+const resultsContainer = document.getElementById('results');
+const resultsBody = document.getElementById('resultsBody');
+let displayedLinks = new Set();
+
+function pollProgress() {
+  fetch(`/check-progress/${searchId}/`)
+    .then(response => response.json())
+    .then(data => {
+      if (!data.total || data.total === 0) {
+        console.log('Search data expired or not found');
+        return;
+      }
+
+      const percentage = data.progress_percent || 0;
+      progressBar.style.width = percentage + '%';
+      progressMeta.textContent = `${percentage}% — ${data.checked}/${data.total}`;
+
+      if (data.alive_links && data.alive_links.length) {
+        resultsContainer.style.display = 'block';
+        data.alive_links.forEach(link => {
+          if (displayedLinks.has(link.id)) return;
+          displayedLinks.add(link.id);
+
+          const row = document.createElement('tr');
+          const responseTime = (link.response_time || 0).toFixed ? link.response_time.toFixed(2) : link.response_time;
+          row.innerHTML = `
+            <td class="url">${link.url}</td>
+            <td>${link.title || '-'}</td>
+            <td>${responseTime}s</td>
+            <td>
+              <button class="btn btn-primary" style="padding:6px 12px;margin-right:6px" onclick="openSandbox(${link.id})">Open</button>
+              <a class="btn btn-secondary" style="padding:6px 12px" href="/investigate/${link.id}/">Investigate</a>
+            </td>
+          `;
+          resultsBody.appendChild(row);
+        });
+      }
+
+      if (!data.complete && data.total > 0) {
+        setTimeout(pollProgress, 900);
+      }
+    })
+    .catch(error => {
+      console.error('Polling error:', error);
+      setTimeout(pollProgress, 1500);
+    });
+}
+
+pollProgress();
+
+function openSandbox(linkId) {
+  const modal = document.getElementById('sandboxModal');
+  const loading = document.getElementById('sandboxLoading');
+  const error = document.getElementById('sandboxError');
+  const frame = document.getElementById('sandboxFrame');
+
+  modal.style.display = 'block';
+  loading.style.display = 'flex';
+  error.style.display = 'none';
+  frame.style.display = 'none';
+
+  fetch(`/sandbox/${linkId}/`)
+    .then(response => response.json())
+    .then(data => {
+      loading.style.display = 'none';
+      if (data.success) {
+        frame.style.display = 'block';
+        frame.srcdoc = data.content;
+      } else {
+        error.style.display = 'flex';
+        document.getElementById('errorMessage').textContent = data.error || 'Unknown error';
+      }
+    })
+    .catch(err => {
+      loading.style.display = 'none';
+      error.style.display = 'flex';
+      document.getElementById('errorMessage').textContent = 'Network error: ' + err.message;
+    });
+}
+
+function closeSandbox() {
+  const modal = document.getElementById('sandboxModal');
+  const frame = document.getElementById('sandboxFrame');
+  modal.style.display = 'none';
+  frame.srcdoc = '';
+}
+
+window.addEventListener('click', event => {
+  const modal = document.getElementById('sandboxModal');
+  if (event.target === modal) {
+    closeSandbox();
+  }
+});
+</script>
+{% endblock %}

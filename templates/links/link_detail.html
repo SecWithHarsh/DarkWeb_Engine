@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ link.url }} - Link Details{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">🔗 Link Details</h2>
+
+    <table style="margin-bottom: 2rem;">
+        <tr>
+            <th style="width: 200px;">URL</th>
+            <td class="url-text">{{ link.url }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td><span class="status-badge status-{{ link.status }}">{{ link.get_status_display }}</span></td>
+        </tr>
+        <tr>
+            <th>Category</th>
+            <td>{{ link.category|default:"-" }}</td>
+        </tr>
+        <tr>
+            <th>Keywords</th>
+            <td>{{ link.keywords|default:"-" }}</td>
+        </tr>
+        <tr>
+            <th>Title</th>
+            <td>{{ link.title|default:"-" }}</td>
+        </tr>
+        <tr>
+            <th>Description</th>
+            <td>{{ link.description|default:"-" }}</td>
+        </tr>
+        <tr>
+            <th>Status Code</th>
+            <td>{% if link.status_code %}{{ link.status_code }}{% else %}-{% endif %}</td>
+        </tr>
+        <tr>
+            <th>Response Time</th>
+            <td>{% if link.response_time %}{{ link.response_time|floatformat:3 }}s{% else %}-{% endif %}</td>
+        </tr>
+        <tr>
+            <th>Last Checked</th>
+            <td>{% if link.last_checked %}{{ link.last_checked|date:"Y-m-d H:i:s" }}{% else %}-{% endif %}</td>
+        </tr>
+        <tr>
+            <th>Created</th>
+            <td>{{ link.created_at|date:"Y-m-d H:i:s" }}</td>
+        </tr>
+    </table>
+
+    <div style="display: flex; gap: 1rem;">
+        <a href="{% url 'search_links' %}" class="btn">← Back to Search</a>
+        {% if user.is_authenticated and link.status == 'alive' %}
+        <a href="{% url 'open_sandbox' link.id %}" class="btn btn-success">🚀 Open in Sandbox</a>
+        {% endif %}
+        <a href="/admin/links/onionlink/{{ link.id }}/change/" class="btn">✏️ Edit</a>
+    </div>
+</div>
+
+{% if check_logs %}
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">📊 Check History</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Checked At</th>
+                <th>Status</th>
+                <th>Status Code</th>
+                <th>Response Time</th>
+                <th>Error Reason</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in check_logs %}
+            <tr>
+                <td>{{ log.checked_at|date:"Y-m-d H:i:s" }}</td>
+                <td><span class="status-badge status-{{ log.status }}">{{ log.status }}</span></td>
+                <td>{% if log.status_code %}{{ log.status_code }}{% else %}-{% endif %}</td>
+                <td>{% if log.response_time %}{{ log.response_time|floatformat:3 }}s{% else %}-{% endif %}</td>
+                <td>{{ log.error_reason|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+

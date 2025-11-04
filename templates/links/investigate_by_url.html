@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Investigate URL • Darkweb Search{% endblock %}
+{% block content %}
+<canvas class="matrix-bg" id="matrix"></canvas>
+<div class="header"><div class="logo"> INVESTIGATE ONION URL</div><div class="tagline">Deep investigation of any .onion site through Tor</div></div>
+<a href="{% url 'home' %}" class="btn btn-ghost">← Back To Home</a>
+{% if messages %}
+  {% for message in messages %}
+    <div class="notice {{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+<div class="card" style="margin-top:16px">
+  <h2 class="card-title"> Enter Target URL</h2>
+  <form method="POST" id="investigateForm" onsubmit="return validateAndConfirm();">
+    {% csrf_token %}
+    <div style="margin-bottom:16px">
+      <label style="display:block;margin-bottom:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">Onion URL</label>
+      <input type="text" id="url" name="url" class="input" placeholder="http://example.onion or example.onion" required autocomplete="off">
+      <div style="margin-top:8px;color:var(--text-secondary);font-size:.9em">Enter the full .onion URL or just the domain (http:// will be added automatically)</div>
+    </div>
+    <div class="card" style="background:var(--bg-dark);padding:16px;border:1px solid var(--border);margin-bottom:16px">
+    <div id="loading" style="display:none;text-align:center;padding:16px">
+      <div class="loader" style="margin:0 auto 10px"></div>
+      <div style="color:var(--primary);font-weight:700">Investigating…</div>
+      <div style="color:var(--text-secondary);font-size:.9em">This may take up to 60 seconds.</div>
+    </div>
+    <button type="submit" class="btn btn-primary" id="submitBtn" style="width:100%">🚀 Start Investigation</button>
+  </form>
+</div>
+<div class="card" style="margin-top:16px">
+  <div class="card-title">⚠️ Investigation Details</div>
+  <ul style="margin-left:18px;color:var(--text-secondary)">
+    <li>📧 Email addresses</li>
+    <li>₿ Bitcoin (BTC) wallet addresses</li>
+    <li>⟠ Ethereum (ETH) wallet addresses</li>
+    <li>🔗 External links and references</li>
+    <li>📊 Server status information (if available)</li>
+  </ul>
+</div>
+<div class="footer">Connected via Tor • Your IP is masked • Stay anonymous • Always use VPN</div>
+<script>
+const canvas=document.getElementById('matrix');
+if(canvas){const ctx=canvas.getContext('2d');canvas.width=window.innerWidth;canvas.height=window.innerHeight;const chars='01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';const fontSize=14;const columns=canvas.width/fontSize;const drops=Array(Math.floor(columns)).fill(1);function draw(){ctx.fillStyle='rgba(15,23,42,0.05)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#00d9ff';ctx.font=fontSize+'px monospace';for(let i=0;i<drops.length;i++){const text=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(text,i*fontSize,drops[i]*fontSize);if(drops[i]*fontSize>canvas.height&&Math.random()>0.975){drops[i]=0}drops[i]++}}setInterval(draw,50);window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight})}
+function fillExample(u){document.getElementById('url').value=u}
+function validateAndConfirm(){const url=document.getElementById('url').value.trim().toLowerCase();if(!url.includes('.onion')){alert('⚠️ Please enter a valid .onion URL');return false}const ok=confirm('🔍 START INVESTIGATION?\n\nTarget: '+url+'\n\nThis will:\n• Connect through Tor\n• Extract emails and crypto addresses\n• Analyze external links\n• Check server status\n\nTime: 30-60 seconds\n\nContinue?');if(ok){document.getElementById('loading').style.display='block';const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='⏳ Investigating...'}return ok}
+window.addEventListener('load',()=>{document.getElementById('url').focus()})
+</script>
+{% endblock %}
+

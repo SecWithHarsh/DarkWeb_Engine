@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Sandbox - {{ link.url }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sandbox-container {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #000;
+    }
+
+    .sandbox-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .sandbox-info {
+        flex: 1;
+    }
+
+    .sandbox-info h3 {
+        margin-bottom: 0.5rem;
+    }
+
+    .sandbox-info p {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        font-family: 'Courier New', monospace;
+    }
+
+    .sandbox-controls {
+        display: flex;
+        gap: 1rem;
+    }
+
+    #sandbox-frame {
+        width: 100%;
+        height: calc(100vh - 200px);
+        border: none;
+        background: white;
+    }
+
+    .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: calc(100vh - 200px);
+        background: white;
+        color: #667eea;
+        font-size: 1.5rem;
+    }
+
+    .error-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: calc(100vh - 200px);
+        background: white;
+        color: #dc3545;
+        padding: 2rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sandbox-container">
+    <div class="sandbox-header">
+        <div class="sandbox-info">
+            <h3>🔒 Secure Sandbox Session</h3>
+            <p>URL: {{ link.url }}</p>
+            <p>Session ID: {{ session_id }}</p>
+        </div>
+        <div class="sandbox-controls">
+            <button onclick="closeSandbox()" class="btn btn-danger">Close Sandbox</button>
+        </div>
+    </div>
+
+    <div id="loading" class="loading">
+        <div>
+            <h2>🔄 Loading content through Tor...</h2>
+            <p style="font-size: 1rem; margin-top: 1rem;">This may take up to 60 seconds</p>
+        </div>
+    </div>
+
+    <div id="error" class="error-message" style="display: none;">
+        <h2>❌ Failed to Load Content</h2>
+        <p id="error-text" style="margin-top: 1rem;"></p>
+        <button onclick="location.reload()" class="btn" style="margin-top: 1rem;">Retry</button>
+    </div>
+
+    <iframe id="sandbox-frame" sandbox="allow-scripts allow-same-origin allow-forms" style="display: none;"></iframe>
+</div>
+
+<script>
+    function closeSandbox() {
+        if (confirm('Are you sure you want to close this sandbox session?')) {
+            fetch("{% url 'close_sandbox' session_id %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }).then(() => {
+                window.location.href = "{% url 'home' %}";
+            });
+        }
+    }
+
+    // Load content via proxy
+    fetch("{% url 'sandbox_proxy' session_id %}")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none';
+
+            if (data.success) {
+                const iframe = document.getElementById('sandbox-frame');
+                iframe.style.display = 'block';
+
+                // Write content to iframe
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                iframeDoc.open();
+                iframeDoc.write(data.content);
+                iframeDoc.close();
+            } else {
+                document.getElementById('error').style.display = 'flex';
+                document.getElementById('error-text').textContent = 'Error: ' + data.error;
+            }
+        })
+        .catch(error => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'flex';
+            document.getElementById('error-text').textContent = 'Network error: ' + error.message;
+        });
+
+    // Auto-close on page unload
+    window.addEventListener('beforeunload', function() {
+        fetch("{% url 'close_sandbox' session_id %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            keepalive: true
+        });
+    });
+</script>
+{% endblock %}
+
